@@ -1,6 +1,6 @@
 {
-    "name": "pestphp/pest-plugin-template",
-    "description": "My awesome plugin",
+    "name": "redberry/pest-plugin-evals",
+    "description": "A Pest plugin for evaluating LLM Outputs",
     "keywords": [
         "php",
         "framework",
@@ -8,6 +8,9 @@
         "unit",
         "test",
         "testing",
+        "evaluation",
+        "llm",
+        "ai",
         "plugin"
     ],
     "license": "MIT",
@@ -18,7 +21,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Pest\\PluginName\\": "src/"
+            "Redberry\\Evals\\": "src/"
         },
         "files": [
             "src/Autoload.php"
