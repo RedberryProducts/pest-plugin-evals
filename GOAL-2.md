@@ -553,14 +553,22 @@ expect($result)->toMatchArray([
 
 LLMs are non-deterministic — the same prompt can produce wildly different outputs. Sampling runs your agent multiple times with the same input and evaluates **each output independently**, giving you confidence that performance is **consistent**, not a lucky one-off.
 
+> **Alias:** `->repeat()` is an alias for `->samples()` — use whichever reads better in your test.
+
 ### Basic Usage
 
-Just chain `->samples()` — the plugin runs the agent N times and asserts every sample:
+Just chain `->samples()` (or `->repeat()`) — the plugin runs the agent N times and asserts every sample:
 
 ```php
 assess(SalesCoach::class)
     ->prompt('Review this sales call...')
     ->samples(5)
+    ->assertMeets('The feedback is constructive');
+
+// Same thing, alternative name
+assess(SalesCoach::class)
+    ->prompt('Review this sales call...')
+    ->repeat(5)
     ->assertMeets('The feedback is constructive');
 ```
 
@@ -1484,6 +1492,6 @@ describe('SalesCoach Agent', function () {
 | **Tools** | `->assertToolUsed('name'\|Tool::class, array\|fn)`, `->assertToolNotUsed()`, `->assertToolUseSequence()`, `->assertToolUsedTimes()`, `->assertToolUsedAtLeast()`, `->assertToolUsedAtMost()` |
 | **Structured** | `->assertHasKey()`, `->assertHasKeys()`, `->assertHasProperty()`, `->assertHasProperties()`, `->assertMatchesArray()` (or `->run()` + PEST's `expect()`) |
 | **Datasets** | `EvalCase::make()`, `EvalCase::fromJson()`, `EvalCase::fromXml()`, `EvalCase::fromDirectory()` |
-| **Sampling** | `->samples(5)`, `->samples(5, minimum: 4)` |
+| **Sampling** | `->samples(5)` / `->repeat(5)`, `->samples(5, minimum: 4)` / `->repeat(5, minimum: 4)` |
 | **Custom Judges** | `Rubric` classes, `Judge` interface, `->assertPasses()` |
 
