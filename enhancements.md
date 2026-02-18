@@ -42,3 +42,34 @@ assess(SalesCoach::class)
     ->assertFallbackUsed()                       // Any fallback was triggered
     ->assertFallbackUsed(Lab::Anthropic);        // Specific fallback provider was used
 ```
+
+---
+
+## Model & Provider Comparison
+
+Run the same eval across multiple models or providers and compare results side-by-side — useful for benchmarking, migration decisions, and cost/quality trade-offs:
+
+```php
+assess(SalesCoach::class)
+    ->prompt('Analyze this transcript...')
+    ->compare([
+        Lab::OpenAI   => 'gpt-4o',
+        Lab::Anthropic => 'claude-sonnet-4-20250514',
+        Lab::Gemini   => 'gemini-2.0-flash',
+    ])
+    ->assertAllMeet('The feedback is constructive');   // Every model must pass
+
+// Access comparison results
+$comparison = assess(SalesCoach::class)
+    ->prompt('Analyze this transcript...')
+    ->compare([
+        Lab::OpenAI    => 'gpt-4o',
+        Lab::Anthropic => 'claude-sonnet-4-20250514',
+    ])
+    ->judge('Is the response helpful?');
+
+$comparison->results();          // Keyed by provider — scores, pass/fail, reasoning
+$comparison->winner();           // Provider with highest average score
+$comparison->ranking();          // Ordered list from best to worst
+$comparison->scoreDiff();        // Score delta between best and worst
+```
