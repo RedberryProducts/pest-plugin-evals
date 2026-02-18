@@ -382,7 +382,11 @@ expect($result->passed)->toBeTrue();
 
 ### Tool Assertions
 
-For agents that use tools:
+For agents that use tools. All tool assertions accept either a **tool class reference** or a **string name**. The second argument can be an **array** (exact argument match) or a **closure** for flexible inspection — just like `Event::assertDispatched`.
+
+#### By String Name
+
+Use string names when referring to tools generically or in JSON/XML datasets:
 
 ```php
 assess(ResearchAgent::class)
@@ -402,6 +406,96 @@ assess(ResearchAgent::class)
     ->assertToolUsedTimes('web_search', 2) // exact count
     ->assertToolUsedAtLeast('web_search', 2) // min
     ->assertToolUsedAtMost('web_search', 5); // max
+```
+
+#### By Tool Class
+
+Use tool class references for type-safety and refactoring support (recommended in PHP test files):
+
+```php
+use App\Ai\Tools\WebSearch;
+use App\Ai\Tools\Summarize;
+use App\Ai\Tools\DangerousTool;
+
+assess(ResearchAgent::class)
+    ->prompt('Find information about Laravel 12')
+    
+    // Tool was called (by class)
+    ->assertToolUsed(WebSearch::class)
+    ->assertToolUsed(WebSearch::class, ['query' => 'Laravel 12'])
+    
+    // Tool was not called
+    ->assertToolNotUsed(DangerousTool::class)
+    
+    // Tool call sequence (by class)
+    ->assertToolUseSequence([WebSearch::class, Summarize::class])
+    
+    // Tool call count (by class)
+    ->assertToolUsedTimes(WebSearch::class, 2)    // exact count
+    ->assertToolUsedAtLeast(WebSearch::class, 2)  // min
+    ->assertToolUsedAtMost(WebSearch::class, 5);  // max
+```
+
+#### Inspecting Tool Arguments with Closures
+
+Pass a closure to inspect the arguments the agent passed to the tool. The closure receives a `ToolInvocation` whose properties map to the tool's schema arguments — just like `Event::assertDispatched`:
+
+```php
+use App\Ai\Tools\RetrievePreviousTranscripts;
+use App\Ai\Tools\WebSearch;
+
+assess(SalesCoach::class)
+    ->prompt('Check my last 3 transcripts')
+    ->assertToolUsed(RetrievePreviousTranscripts::class, function (ToolInvocation $tool) {
+        return $tool->limit === 3; // Inspecting the arguments the LLM chose
+    });
+
+assess(ResearchAgent::class)
+    ->prompt('Find recent Laravel 12 release notes')
+    ->assertToolUsed(WebSearch::class, function (ToolInvocation $tool) {
+        return str_contains($tool->query, 'Laravel 12');
+    });
+```
+
+> **How it works:** `ToolInvocation` wraps the arguments the LLM passed to the tool. Properties like `$tool->limit` or `$tool->query` correspond to keys in the tool's `schema()`. The closure must return `true` for the assertion to pass. If the tool was called multiple times, the assertion passes when **at least one** invocation satisfies the closure (matching `Event::assertDispatched` semantics).
+
+#### Combining Closure with Count
+
+When you need both argument inspection and count constraints:
+
+```php
+assess(ResearchAgent::class)
+    ->prompt('Compare Laravel and Symfony frameworks')
+    // At least 2 calls must match the closure
+    ->assertToolUsedAtLeast(WebSearch::class, 2, function (ToolInvocation $tool) {
+        return str_contains($tool->query, 'Laravel')
+            || str_contains($tool->query, 'Symfony');
+    });
+```
+
+#### Method Signatures
+
+Every tool assertion method accepts a **string name** or **class reference** as its first argument. The second argument varies:
+
+| Method | Signature |
+|--------|-----------|
+| `assertToolUsed` | `(string\|class, array\|Closure\|null)` |
+| `assertToolNotUsed` | `(string\|class)` |
+| `assertToolUseSequence` | `(array)` — array of strings and/or class references |
+| `assertToolUsedTimes` | `(string\|class, int, Closure\|null)` |
+| `assertToolUsedAtLeast` | `(string\|class, int, Closure\|null)` |
+| `assertToolUsedAtMost` | `(string\|class, int, Closure\|null)` |
+
+#### ToolInvocation API
+
+The `ToolInvocation` object passed to closures provides:
+
+```php
+$tool->query;          // Access argument by name (magic __get)
+$tool->arguments;      // array — all arguments the LLM passed
+$tool->toolClass;      // string — FQCN of the tool (e.g., WebSearch::class)
+$tool->toolName;       // string — tool name (e.g., 'web_search')
+$tool->result;         // mixed — the return value from the tool's handle()
 ```
 
 ### Structured Output Assertions
@@ -573,11 +667,17 @@ $samples->each(function (JudgeResult $result, int $index) {
 Tool assertions under sampling check each sample independently:
 
 ```php
+use App\Ai\Tools\WebSearch;
+use App\Ai\Tools\RetrievePreviousTranscripts;
+
 assess(ResearchAgent::class)
     ->prompt('Find information about Laravel 12')
     ->samples(3, minimum: 2)
-    ->assertToolUsed('web_search')        // At least 2 of 3 must use web_search
-    ->assertToolUsedAtMost('web_search', 3);  // Each run uses it at most 3 times
+    ->assertToolUsed(WebSearch::class)                   // At least 2 of 3 must use WebSearch
+    ->assertToolUsedAtMost(WebSearch::class, 3)          // Each run uses it at most 3 times
+    ->assertToolUsed(WebSearch::class, function (ToolInvocation $tool) {
+        return str_contains($tool->query, 'Laravel');    // At least 2 of 3 must match
+    });
 ```
 
 ### With Datasets
@@ -1216,7 +1316,9 @@ test('DataExtractor parses contact information (fluent)', function () {
 
 ```php
 use App\Ai\Agents\ResearchAssistant;
+use App\Ai\Tools\WebSearch;
 use Laravel\Ai\Enums\Lab;
+use Redberry\Evals\ToolInvocation;
 
 test('ResearchAssistant uses web search appropriately', function () {
     assess(ResearchAssistant::class)
@@ -1226,8 +1328,11 @@ test('ResearchAssistant uses web search appropriately', function () {
             model: 'gpt-4o',
             timeout: 60,
         )
-        ->assertToolUsed('web_search')
-        ->assertToolUsedAtMost('web_search', 3)
+        ->assertToolUsed(WebSearch::class)
+        ->assertToolUsed(WebSearch::class, function (ToolInvocation $tool) {
+            return str_contains($tool->query, 'Laravel 12');
+        })
+        ->assertToolUsedAtMost(WebSearch::class, 3)
         ->assertMeets('Response cites sources from the web search')
         ->assertMeets('Information is current and accurate');
 });
@@ -1376,7 +1481,7 @@ describe('SalesCoach Agent', function () {
 | **Config Override** | `->prompt(..., provider:, model:)` or `->provider(...)`, `->model(...)` |
 | **Deterministic** | `->assertContains()`, `->assertLength*()`, etc. |
 | **LLM Judge** | `->assertMeets('...')`, `->assertDoesNotMeet('...')`, `->assertSimilarTo('...')`, `->assertPasses()` |
-| **Tools** | `->assertToolUsed()`, `->assertToolUseSequence()` |
+| **Tools** | `->assertToolUsed('name'\|Tool::class, array\|fn)`, `->assertToolNotUsed()`, `->assertToolUseSequence()`, `->assertToolUsedTimes()`, `->assertToolUsedAtLeast()`, `->assertToolUsedAtMost()` |
 | **Structured** | `->assertHasKey()`, `->assertHasKeys()`, `->assertHasProperty()`, `->assertHasProperties()`, `->assertMatchesArray()` (or `->run()` + PEST's `expect()`) |
 | **Datasets** | `EvalCase::make()`, `EvalCase::fromJson()`, `EvalCase::fromXml()`, `EvalCase::fromDirectory()` |
 | **Sampling** | `->samples(5)`, `->samples(5, minimum: 4)` |
