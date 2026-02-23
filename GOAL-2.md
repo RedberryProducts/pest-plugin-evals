@@ -729,7 +729,7 @@ $samples = evaluate(SalesCoach::class)
 $samples->passRate();       // 80 (4 of 5 passed)
 $samples->averageScore();   // 82 (convenience aggregate)
 $samples->passed();         // true/false based on minimum + threshold
-$samples->results();        // Collection of individual JudgeResult objects
+$samples->judgeResults();   // Collection of individual JudgeResult objects
 
 // Iterate individual results
 $samples->each(function (JudgeResult $result, int $index) {
