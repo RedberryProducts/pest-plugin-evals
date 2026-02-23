@@ -9,6 +9,7 @@ A PEST plugin for evaluating Laravel AI SDK agents with effortless testing and r
 1. [Philosophy](#philosophy)
 2. [Quick Start](#quick-start)
 3. [Core API](#core-api)
+   - [BDD-Style Syntax](#bdd-style-syntax-alternative)
 4. [Prompting & Input](#prompting--input)
 5. [Assertions](#assertions)
    - [Deterministic Assertions](#deterministic-assertions)
@@ -38,7 +39,7 @@ This plugin follows three core principles:
 ```php
 // This is all you need to evaluate an agent
 test('sales coach provides constructive feedback', function () {
-    assess(SalesCoach::class)
+    evaluate(SalesCoach::class)
         ->prompt('The customer said "too expensive" and I hung up.')
         ->assertMeets('The response should offer negotiation tactics')
         ->assertMeets('The tone should be encouraging, not critical');
@@ -61,7 +62,7 @@ composer require redberry/pest-plugin-evals --dev
 use App\Ai\Agents\PostWriter;
 
 test('PostWriter writes engaging content', function () {
-    assess(PostWriter::class)
+    evaluate(PostWriter::class)
         ->prompt('Write a blog post about Laravel')
         ->assertContains('Laravel')
         ->assertMeets('The content is engaging and informative');
@@ -72,25 +73,25 @@ test('PostWriter writes engaging content', function () {
 
 ## Core API
 
-### Entry Point: `assess()`
+### Entry Point: `evaluate()`
 
-The `assess()` function is the entry point for all evaluations. It accepts an Agent class and resolves it via Laravel's container.
+The `evaluate()` function is the entry point for all evaluations. It accepts an Agent class and resolves it via Laravel's container.
 
 ```php
 use App\Ai\Agents\SalesCoach;
 use App\Models\User;
 
 // Basic usage
-assess(SalesCoach::class);
+evaluate(SalesCoach::class);
 
 // With constructor arguments (resolved via container)
-assess(SalesCoach::class, ['user' => $user]);
+evaluate(SalesCoach::class, ['user' => $user]);
 
 // With agent instance
-assess(new SalesCoach($user));
+evaluate(new SalesCoach($user));
 
 // With agent factory
-assess(fn () => SalesCoach::make(user: $user));
+evaluate(fn () => SalesCoach::make(user: $user));
 ```
 
 ### Prompt Method Signature
@@ -98,7 +99,7 @@ assess(fn () => SalesCoach::make(user: $user));
 The `prompt()` method mirrors Laravel AI SDK's signature:
 
 ```php
-assess(Agent::class)
+evaluate(Agent::class)
     ->prompt(
         'Your prompt here',
         provider: Lab::Anthropic,           // Override provider
@@ -117,7 +118,7 @@ assess(Agent::class)
 All prompt parameters are also available as separate fluent methods:
 
 ```php
-assess(Agent::class)
+evaluate(Agent::class)
     ->attachments([...])                    // Add files/images
     ->provider(Lab::Anthropic)              // Override provider
     ->model('claude-haiku-4-5-20251001')    // Override model
@@ -130,6 +131,72 @@ assess(Agent::class)
 
 > **Note:** Fluent methods set defaults that can be overridden by `prompt()` parameters.
 
+### BDD-Style Syntax (Alternative)
+
+For developers who prefer a more natural-language, BDD-style API, all assertions have `to*` aliases:
+
+```php
+evaluate(SalesCoach::class)
+    ->whenPrompted('The customer said "too expensive" and I hung up.')
+    ->toMeet('The response should offer negotiation tactics')
+    ->toBeSimilarTo('Expected response content here');
+```
+
+| Standard API | BDD-Style Alias |
+|--------------|-----------------|
+| `prompt()` | `whenPrompted()` |
+| `assertMeets()` | `toMeet()` |
+| `assertSimilarTo()` | `toBeSimilarTo()` |
+| `assertSimilar()` | `toBeSimilar()` |
+| `assertEquals()` / `assertMatchesArray()` | `toBe()` (exact match, auto-detects type) |
+
+#### With Expected Value
+
+```php
+evaluate(SalesCoach::class)
+    ->whenPrompted('The customer said "too expensive" and I hung up.')
+    ->expected($expectedOutput)
+    ->toMeet($criteria)       // Rubric check, same as assertMeets
+    ->toBeSimilar();          // Similarity check, same as assertSimilar
+```
+
+#### With Structured Output (Exact Match)
+
+For agents with structured output, `toBe()` performs a deterministic exact match:
+
+```php
+evaluate(DataExtractor::class)
+    ->whenPrompted('Extract user info from: John Doe, john@example.com')
+    ->toBe([
+        'name'  => 'John Doe',
+        'email' => 'john@example.com',
+    ]);
+```
+
+#### With String Output (Exact Match)
+
+`toBe()` also works with strings for exact text comparison:
+
+```php
+evaluate(Greeter::class)
+    ->whenPrompted('Say hello to John')
+    ->toBe('Hello, John!');
+```
+
+> **Note:** `toBe()` is deterministic — it checks for exact equality (uses `assertMatchesArray()` for arrays, `assertEquals()` for strings). For fuzzy matching, use `toBeSimilarTo()` or `toMeet()`.
+
+#### Combining Styles
+
+You can mix standard and BDD-style methods in the same chain:
+
+```php
+evaluate(SalesCoach::class)
+    ->whenPrompted('Review this call...')
+    ->toMeet('Professional tone')
+    ->assertContains('feedback')          // Standard assertion
+    ->toBeSimilarTo($expectedResponse);
+```
+
 ---
 
 ## Prompting & Input
@@ -137,7 +204,7 @@ assess(Agent::class)
 ### Simple Prompt
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Analyze this sales call transcript...');
 ```
 
@@ -146,7 +213,7 @@ assess(SalesCoach::class)
 ```php
 use Laravel\Ai\Enums\Lab;
 
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt(
         'Analyze this sales call transcript...',
         provider: Lab::Anthropic,
@@ -154,7 +221,7 @@ assess(SalesCoach::class)
     );
 
 // Or using fluent methods
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->provider(Lab::Anthropic)
     ->model('claude-3-5-sonnet')
     ->prompt('Analyze this sales call transcript...');
@@ -168,7 +235,7 @@ Attachments can be passed directly to `prompt()` or via the fluent method:
 use Laravel\Ai\Files;
 
 // Inline with prompt (recommended - matches Laravel AI SDK)
-assess(DocumentAnalyzer::class)
+evaluate(DocumentAnalyzer::class)
     ->prompt(
         'Summarize this document',
         attachments: [
@@ -181,7 +248,7 @@ assess(DocumentAnalyzer::class)
     ->assertMeets('Summary captures key contract terms');
 
 // Or using fluent method
-assess(DocumentAnalyzer::class)
+evaluate(DocumentAnalyzer::class)
     ->attachments([
         Files\Document::fromStorage('contracts/agreement.pdf'),
     ])
@@ -192,14 +259,14 @@ assess(DocumentAnalyzer::class)
 ### With Timeout
 
 ```php
-assess(SlowAgent::class)
+evaluate(SlowAgent::class)
     ->prompt(
         'Process this large dataset...',
         timeout: 300, // 5 minutes
     );
 
 // Or using fluent method
-assess(SlowAgent::class)
+evaluate(SlowAgent::class)
     ->timeout(300)
     ->prompt('Process this large dataset...');
 ```
@@ -210,7 +277,7 @@ assess(SlowAgent::class)
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Files;
 
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt(
         'Analyze this call recording',
         provider: Lab::OpenAI,
@@ -237,7 +304,7 @@ use Redberry\Evals\EvalCase;
 $case = EvalCase::make()
     ->prompt('Write a haiku about PHP');
 
-assess(HaikuWriter::class)
+evaluate(HaikuWriter::class)
     ->withCase($case)
     ->assertMeets('The response is a valid haiku with 5-7-5 syllables');
 ```
@@ -251,7 +318,7 @@ $case = EvalCase::make()
     ->prompt('Kindly ask to contact us at hello@example.com')
     ->expected('Please, contact us at hello@example.com');
 
-assess(SupportAgent::class)
+evaluate(SupportAgent::class)
     ->withCase($case)
     ->assertMeets('asks to contact at hello@example.com')
     ->assertSimilarTo($case->expected); // expectation required for similarity
@@ -266,7 +333,7 @@ $case = EvalCase::make()
     ->prompt('Extract the email from this text: Contact us at hello@example.com')
     ->expected(['email' => 'hello@example.com']);
 
-$result = assess(DataExtractor::class)
+$result = evaluate(DataExtractor::class)
     ->withCase($case)
     ->run();
 
@@ -286,7 +353,7 @@ $case = EvalCase::make()
     ])
     ->expected('Key terms include payment schedule, termination clause, and liability cap');
 
-assess(ContractAnalyzer::class)
+evaluate(ContractAnalyzer::class)
     ->withCase($case)
     ->assertSimilarTo($case->expected);
 ```
@@ -300,7 +367,7 @@ assess(ContractAnalyzer::class)
 Classic PHP assertions that don't require LLM calls:
 
 ```php
-assess(CopyWriter::class)
+evaluate(CopyWriter::class)
     ->prompt('Write a tweet about Laravel')
     
     // String assertions
@@ -331,7 +398,7 @@ assess(CopyWriter::class)
 Pass a natural language expectation, and an LLM evaluates compliance:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Review this call transcript...')
     
     // Magic string-based judges (most common)
@@ -356,17 +423,17 @@ Run a judge and get back the raw `JudgeResult` for use with PEST's `expect()`:
 
 ```php
 // Default LLM judge — string criterion
-$result = assess(SalesCoach::class)
+$result = evaluate(SalesCoach::class)
     ->prompt('...')
     ->judge('Is the response helpful?');
 
 // With a Rubric
-$result = assess(SalesCoach::class)
+$result = evaluate(SalesCoach::class)
     ->prompt('...')
     ->judge('Is the tone professional?', new ProfessionalTone);
 
 // With a custom Judge class (expects ->expected() to be set)
-$result = assess(SalesCoach::class)
+$result = evaluate(SalesCoach::class)
     ->prompt('...')
     ->expected('The expected response text')
     ->judge('Similarity check', new SimilarityJudge(threshold: 90));
@@ -389,7 +456,7 @@ For agents that use tools. All tool assertions accept either a **tool class refe
 Use string names when referring to tools generically or in JSON/XML datasets:
 
 ```php
-assess(ResearchAgent::class)
+evaluate(ResearchAgent::class)
     ->prompt('Find information about Laravel 12')
     
     // Tool was called
@@ -417,7 +484,7 @@ use App\Ai\Tools\WebSearch;
 use App\Ai\Tools\Summarize;
 use App\Ai\Tools\DangerousTool;
 
-assess(ResearchAgent::class)
+evaluate(ResearchAgent::class)
     ->prompt('Find information about Laravel 12')
     
     // Tool was called (by class)
@@ -444,13 +511,13 @@ Pass a closure to inspect the arguments the agent passed to the tool. The closur
 use App\Ai\Tools\RetrievePreviousTranscripts;
 use App\Ai\Tools\WebSearch;
 
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Check my last 3 transcripts')
     ->assertToolUsed(RetrievePreviousTranscripts::class, function (ToolInvocation $tool) {
         return $tool->limit === 3; // Inspecting the arguments the LLM chose
     });
 
-assess(ResearchAgent::class)
+evaluate(ResearchAgent::class)
     ->prompt('Find recent Laravel 12 release notes')
     ->assertToolUsed(WebSearch::class, function (ToolInvocation $tool) {
         return str_contains($tool->query, 'Laravel 12');
@@ -464,7 +531,7 @@ assess(ResearchAgent::class)
 When you need both argument inspection and count constraints:
 
 ```php
-assess(ResearchAgent::class)
+evaluate(ResearchAgent::class)
     ->prompt('Compare Laravel and Symfony frameworks')
     // At least 2 calls must match the closure
     ->assertToolUsedAtLeast(WebSearch::class, 2, function (ToolInvocation $tool) {
@@ -503,7 +570,7 @@ $tool->result;         // mixed — the return value from the tool's handle()
 For agents implementing `HasStructuredOutput`, use fluent assertion methods that mirror PEST's expectations API with the `assert` prefix:
 
 ```php
-assess(DataExtractor::class)
+evaluate(DataExtractor::class)
     ->prompt('Extract user info from: John Doe, john@example.com')
 
     // Key exists (array key, supports dot notation)
@@ -536,7 +603,7 @@ assess(DataExtractor::class)
 You can also call `->run()` and use PEST's native `expect()` directly:
 
 ```php
-$result = assess(DataExtractor::class)
+$result = evaluate(DataExtractor::class)
     ->prompt('Extract user info from: John Doe, john@example.com')
     ->run();
 
@@ -560,13 +627,13 @@ LLMs are non-deterministic — the same prompt can produce wildly different outp
 Just chain `->samples()` (or `->repeat()`) — the plugin runs the agent N times and asserts every sample:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Review this sales call...')
     ->samples(5)
     ->assertMeets('The feedback is constructive');
 
 // Same thing, alternative name
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Review this sales call...')
     ->repeat(5)
     ->assertMeets('The feedback is constructive');
@@ -579,7 +646,7 @@ This runs the agent **5 times** and every sample must pass. If even one fails, t
 LLMs aren't perfect. If you're OK with occasional misses, specify the minimum number of samples that must pass:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Review this sales call...')
     ->samples(5, minimum: 4)
     ->assertMeets('The feedback is constructive');
@@ -592,7 +659,7 @@ This runs 5 samples and passes as long as **at least 4** meet the criterion.
 For scored assertions (those with a threshold), each sample must individually meet the threshold:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('...')
     ->samples(5)
     ->assertMeets('Professional tone', 80);  // Every sample must score >= 80
@@ -601,7 +668,7 @@ assess(SalesCoach::class)
 Combined with `minimum`, this becomes: "at least N samples must score above the threshold":
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('...')
     ->samples(5, minimum: 4)
     ->assertMeets('Professional tone', 80);  // At least 4 of 5 must score >= 80
@@ -614,7 +681,7 @@ This catches inconsistency — a single lucky run might score 95, but sampling p
 Sampling works with every assertion type. Each sample is checked individually:
 
 ```php
-assess(CopyWriter::class)
+evaluate(CopyWriter::class)
     ->prompt('Write a tweet about Laravel')
     ->samples(3)
     ->assertContains('Laravel')       // All 3 must contain "Laravel"
@@ -627,7 +694,7 @@ assess(CopyWriter::class)
 The `minimum` applies globally to all assertions in the chain:
 
 ```php
-assess(CopyWriter::class)
+evaluate(CopyWriter::class)
     ->prompt('Write a tweet about Laravel')
     ->samples(5, minimum: 4)
     ->assertContains('Laravel')                  // At least 4 of 5
@@ -640,7 +707,7 @@ assess(CopyWriter::class)
 Call `->run()` with sampling to get a `SampleResults` collection:
 
 ```php
-$samples = assess(DataExtractor::class)
+$samples = evaluate(DataExtractor::class)
     ->prompt('Extract: John, john@example.com')
     ->samples(5)
     ->run();
@@ -654,7 +721,7 @@ $samples->last();           // Last sample output
 You can also judge the samples manually and inspect aggregate results:
 
 ```php
-$samples = assess(SalesCoach::class)
+$samples = evaluate(SalesCoach::class)
     ->prompt('...')
     ->samples(5)
     ->judge('Is the response helpful?');
@@ -678,7 +745,7 @@ Tool assertions under sampling check each sample independently:
 use App\Ai\Tools\WebSearch;
 use App\Ai\Tools\RetrievePreviousTranscripts;
 
-assess(ResearchAgent::class)
+evaluate(ResearchAgent::class)
     ->prompt('Find information about Laravel 12')
     ->samples(3, minimum: 2)
     ->assertToolUsed(WebSearch::class)                   // At least 2 of 3 must use WebSearch
@@ -694,7 +761,7 @@ Sampling composes naturally with PEST datasets — each case runs N times:
 
 ```php
 it('consistently extracts emails', function (EvalCase $case) {
-    assess(EmailExtractor::class)
+    evaluate(EmailExtractor::class)
         ->withCase($case)
         ->samples(3)
         ->assertMeets($case->expected);
@@ -726,7 +793,7 @@ dataset('sales_scenarios', [
 
 // Usage
 it('handles customer scenarios', function (EvalCase $case) {
-    assess(SupportBot::class)
+    evaluate(SupportBot::class)
         ->withCase($case)
         ->assertMeets($case->expected);
 })->with('sales_scenarios');
@@ -849,7 +916,7 @@ dataset('data_extraction', fn () => EvalCase::fromDirectory('evals/data-extracto
 ```php
 // Usage — structured output
 it('extracts data correctly', function (EvalCase $case) {
-    $result = assess(DataExtractor::class)
+    $result = evaluate(DataExtractor::class)
         ->withCase($case)
         ->run();
     
@@ -858,7 +925,7 @@ it('extracts data correctly', function (EvalCase $case) {
 
 // Usage — plain text output
 it('support bot responds correctly', function (EvalCase $case) {
-    assess(SupportBot::class)
+    evaluate(SupportBot::class)
         ->withCase($case)
         ->assertMeets($case->expected)
         ->assertSimilarTo($case->expected); // requires expected
@@ -866,7 +933,7 @@ it('support bot responds correctly', function (EvalCase $case) {
 
 // Usage — with attachments
 it('analyzes contracts', function (EvalCase $case) {
-    assess(ContractAnalyzer::class)
+    evaluate(ContractAnalyzer::class)
         ->withCase($case)  // attachments are automatically forwarded
         ->assertSimilarTo($case->expected);
 })->with('contract_cases');
@@ -965,14 +1032,14 @@ dataset('all_cases', fn () => EvalCase::fromDirectory('evals/contract-analyzer')
 ```php
 // Usage — plain text output
 it('support bot responds correctly', function (EvalCase $case) {
-    assess(SupportBot::class)
+    evaluate(SupportBot::class)
         ->withCase($case)
         ->assertMeets($case->expected);
 })->with('customer_support');
 
 // Usage — with attachments
 it('analyzes contracts', function (EvalCase $case) {
-    assess(ContractAnalyzer::class)
+    evaluate(ContractAnalyzer::class)
         ->withCase($case)  // attachments are automatically forwarded
         ->assertSimilarTo($case->expected);
 })->with('all_cases');
@@ -1043,7 +1110,7 @@ class ProfessionalTone extends Rubric
 
 ```php
 // Usage
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('...')
     ->assertMeets(new ProfessionalTone)
     ->assertMeets(new AccuracyRubric)
@@ -1088,7 +1155,7 @@ class SimilarityJudge implements Judge
 
 ```php
 // Usage
-assess(DataExtractor::class)
+evaluate(DataExtractor::class)
     ->withCase($case)
     ->assertPasses(new SimilarityJudge(threshold: 90));
 ```
@@ -1098,12 +1165,12 @@ assess(DataExtractor::class)
 For comparing actual output against expected output:
 
 ```php
-assess(Summarizer::class)
+evaluate(Summarizer::class)
     ->prompt('Summarize this article...')
     ->assertSimilarTo('Expected summary...', threshold: 85);  // Custom threshold
 
 // Or using fluent chain with separate expected
-assess(Summarizer::class)
+evaluate(Summarizer::class)
     ->prompt('Summarize this article...')
     ->expected('A concise summary mentioning key points X, Y, and Z')
     ->assertSimilar()                    // Uses default similarity threshold
@@ -1167,7 +1234,7 @@ Override agent provider/model in the prompt:
 ```php
 use Laravel\Ai\Enums\Lab;
 
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt(
         'Analyze this transcript...',
         provider: Lab::Anthropic,
@@ -1180,7 +1247,7 @@ assess(SalesCoach::class)
 Override judge provider/model:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->judgeWith(Lab::OpenAI, 'gpt-4o-mini')
     ->prompt('...')
     ->assertMeets('...');
@@ -1280,7 +1347,7 @@ When using `->samples()`, the CLI shows aggregate results:
 use App\Ai\Agents\BlogWriter;
 
 test('BlogWriter creates engaging content', function () {
-    assess(BlogWriter::class)
+    evaluate(BlogWriter::class)
         ->prompt('Write a blog post about PHP 8.4 features')
         ->assertContains('PHP')
         ->assertLengthGreaterThan(500)
@@ -1296,7 +1363,7 @@ test('BlogWriter creates engaging content', function () {
 use App\Ai\Agents\DataExtractor;
 
 test('DataExtractor parses contact information', function () {
-    $result = assess(DataExtractor::class)
+    $result = evaluate(DataExtractor::class)
         ->prompt('John Smith, CEO at Acme Corp. Email: john@acme.com')
         ->run();
     
@@ -1309,7 +1376,7 @@ test('DataExtractor parses contact information', function () {
 });
 
 test('DataExtractor parses contact information (fluent)', function () {
-    assess(DataExtractor::class)
+    evaluate(DataExtractor::class)
         ->prompt('John Smith, CEO at Acme Corp. Email: john@acme.com')
         ->assertHasProperty('name', 'John Smith')
         ->assertHasProperties(['title', 'company', 'email'])
@@ -1329,7 +1396,7 @@ use Laravel\Ai\Enums\Lab;
 use Redberry\Evals\ToolInvocation;
 
 test('ResearchAssistant uses web search appropriately', function () {
-    assess(ResearchAssistant::class)
+    evaluate(ResearchAssistant::class)
         ->prompt(
             'What are the latest Laravel 12 features?',
             provider: Lab::OpenAI,
@@ -1353,7 +1420,7 @@ use App\Ai\Agents\InvoiceAnalyzer;
 use Laravel\Ai\Files;
 
 test('InvoiceAnalyzer extracts totals from PDF', function () {
-    assess(InvoiceAnalyzer::class)
+    evaluate(InvoiceAnalyzer::class)
         ->prompt(
             'What is the total amount due?',
             attachments: [
@@ -1385,14 +1452,14 @@ dataset('email_extraction_cases', [
 ]);
 
 it('extracts emails accurately', function (EvalCase $case) {
-    $result = assess(EmailExtractor::class)
+    $result = evaluate(EmailExtractor::class)
         ->withCase($case)
         ->run();
     
     expect($result)->toMatchArray($case->expected);
     
     // Also validate with LLM judge
-    assess(EmailExtractor::class)
+    evaluate(EmailExtractor::class)
         ->withCase($case)
         ->assertMeets('All email addresses are correctly identified');
 })->with('email_extraction_cases');
@@ -1404,7 +1471,7 @@ it('extracts emails accurately', function (EvalCase $case) {
 use App\Ai\Agents\SalesCoach;
 
 test('SalesCoach consistently provides quality feedback', function () {
-    assess(SalesCoach::class)
+    evaluate(SalesCoach::class)
         ->prompt('Customer: "Your price is too high." Rep: "I understand..."')
         ->samples(5, minimum: 4)
         ->assertMeets('The feedback is constructive and actionable')
@@ -1413,7 +1480,7 @@ test('SalesCoach consistently provides quality feedback', function () {
 });
 
 test('SalesCoach structured output is stable across samples', function () {
-    $samples = assess(SalesCoach::class)
+    $samples = evaluate(SalesCoach::class)
         ->prompt('Customer: "Your price is too high." Rep: "I understand..."')
         ->samples(3)
         ->run();
@@ -1441,7 +1508,7 @@ describe('SalesCoach Agent', function () {
     });
     
     test('analyzes transcripts and provides scores', function () {
-        $result = assess(SalesCoach::class, ['user' => $this->user])
+        $result = evaluate(SalesCoach::class, ['user' => $this->user])
             ->prompt('Customer: "Your price is too high." Rep: "I understand..."')
             ->run();
         
@@ -1453,7 +1520,7 @@ describe('SalesCoach Agent', function () {
     });
     
     test('provides constructive feedback', function () {
-        assess(SalesCoach::class, ['user' => $this->user])
+        evaluate(SalesCoach::class, ['user' => $this->user])
             ->prompt('[Sales call transcript here]')
             ->assertMeets(new ProfessionalTone)
             ->assertMeets(new ActionableAdvice)
@@ -1461,7 +1528,7 @@ describe('SalesCoach Agent', function () {
     });
     
     it('handles various scenarios', function (EvalCase $case) {
-        assess(SalesCoach::class, ['user' => $this->user])
+        evaluate(SalesCoach::class, ['user' => $this->user])
             ->withCase($case)
             ->assertMeets($case->expected)
             ->assertMeets(new ProfessionalTone);
@@ -1483,7 +1550,7 @@ describe('SalesCoach Agent', function () {
 
 | Feature | API |
 |---------|-----|
-| **Entry Point** | `assess(Agent::class)` |
+| **Entry Point** | `evaluate(Agent::class)` |
 | **Prompting** | `->prompt('...', provider:, model:, timeout:, attachments:)` |
 | **Attachments** | `->prompt(..., attachments: [...])` or `->attachments([...])` |
 | **Config Override** | `->prompt(..., provider:, model:)` or `->provider(...)`, `->model(...)` |
@@ -1494,4 +1561,5 @@ describe('SalesCoach Agent', function () {
 | **Datasets** | `EvalCase::make()`, `EvalCase::fromJson()`, `EvalCase::fromXml()`, `EvalCase::fromDirectory()` |
 | **Sampling** | `->samples(5)` / `->repeat(5)`, `->samples(5, minimum: 4)` / `->repeat(5, minimum: 4)` |
 | **Custom Judges** | `Rubric` classes, `Judge` interface, `->assertPasses()` |
+| **BDD-Style Aliases** | `->whenPrompted()`, `->toMeet()`, `->toBeSimilarTo()`, `->toBeSimilar()`, `->toBe()` |
 

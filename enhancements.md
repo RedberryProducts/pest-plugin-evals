@@ -9,7 +9,7 @@ Ideas for future versions of the PEST Evals Plugin.
 Add assertions to help developers monitor efficiency and keep costs under control:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Analyze this transcript...')
     ->assertCostLessThan(0.05)           // USD — fail if the call costs more
     ->assertTokenCountLessThan(1000)     // Total tokens (input + output)
@@ -24,7 +24,7 @@ assess(SalesCoach::class)
 Cache agent responses to avoid repeated LLM calls during iterative test development. Useful when refining assertions without changing the prompt or agent:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Analyze this transcript...')
     ->cache()                            // Re-use cached response if prompt hasn't changed
     ->assertMeets('Constructive feedback');
@@ -37,7 +37,7 @@ assess(SalesCoach::class)
 Assert that the primary provider failed and a fallback was used — useful for testing resilience configurations:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Analyze this transcript...')
     ->assertFallbackUsed()                       // Any fallback was triggered
     ->assertFallbackUsed(Lab::Anthropic);        // Specific fallback provider was used
@@ -50,7 +50,7 @@ assess(SalesCoach::class)
 Run the same eval across multiple models or providers and compare results side-by-side — useful for benchmarking, migration decisions, and cost/quality trade-offs:
 
 ```php
-assess(SalesCoach::class)
+evaluate(SalesCoach::class)
     ->prompt('Analyze this transcript...')
     ->compare([
         Lab::OpenAI   => 'gpt-4o',
@@ -60,7 +60,7 @@ assess(SalesCoach::class)
     ->assertAllMeet('The feedback is constructive');   // Every model must pass
 
 // Access comparison results
-$comparison = assess(SalesCoach::class)
+$comparison = evaluate(SalesCoach::class)
     ->prompt('Analyze this transcript...')
     ->compare([
         Lab::OpenAI    => 'gpt-4o',
