@@ -48,10 +48,20 @@ composer test:integration
 
 If the key file is missing, all integration tests are automatically skipped.
 
+### Usage Tests (Requires API Key)
+
+Usage tests cover all use cases documented in GOAL-2.md. They test real API calls across every feature: core API, BDD syntax, prompting, assertions (deterministic, LLM judge, tool, structured output), sampling, datasets, custom judges, and full end-to-end examples.
+
+```bash
+composer test:usage
+```
+
+Uses the same `openai-api-key.php` setup as integration tests above.
+
 ### Run Everything
 
 ```bash
-composer test && composer test:integration
+composer test && composer test:integration && composer test:usage
 ```
 
 ### Individual Commands
@@ -60,6 +70,7 @@ composer test && composer test:integration
 |---|---|
 | `composer test:unit` | Unit tests only (no API key needed) |
 | `composer test:integration` | Integration tests only (requires API key) |
+| `composer test:usage` | Usage tests — all GOAL-2.md examples (requires API key) |
 | `composer test:types` | PHPStan static analysis |
 | `composer test:lint` | Pint code style check |
 | `composer test` | Full CI/CD suite (lint + types + unit) |

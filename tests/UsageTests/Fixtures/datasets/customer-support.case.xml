@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evalset name="customer-support">
+    <case name="refund-request">
+        <prompt>I want to return this product</prompt>
+        <expected>Polite acknowledgment with return instructions</expected>
+    </case>
+    <case name="complaint">
+        <prompt>This product is terrible!</prompt>
+        <expected>Empathetic response with solution offer</expected>
+    </case>
+    <case name="open-ended">
+        <prompt>What is your return policy?</prompt>
+    </case>
+</evalset>

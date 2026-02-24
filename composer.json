@@ -55,6 +55,7 @@
         "test:types": "phpstan analyse --ansi",
         "test:unit": "pest --testsuite=default --colors=always",
         "test:integration": "pest --testsuite=integration --colors=always",
+        "test:usage": "pest --testsuite=usage-tests --colors=always",
         "test": [
             "@test:refacto",
             "@test:lint",

@@ -25,9 +25,13 @@
         <testsuite name="default">
             <directory suffix=".php">./tests</directory>
             <exclude>./tests/Integration</exclude>
+            <exclude>./tests/UsageTests</exclude>
         </testsuite>
         <testsuite name="integration">
             <directory suffix=".php">./tests/Integration</directory>
+        </testsuite>
+        <testsuite name="usage-tests">
+            <directory suffix=".php">./tests/UsageTests</directory>
         </testsuite>
     </testsuites>
     <source>
