@@ -6,6 +6,7 @@
  * Tests EvalCase inline creation, JSON datasets, XML datasets, and fromDirectory.
  */
 
+use Redberry\Evals\DatasetLoader;
 use Redberry\Evals\EvalCase;
 use Redberry\Evals\EvalResult;
 use Tests\Integration\Fixtures\GeographyAgent;
@@ -97,7 +98,7 @@ it('loads cases from XML file', function () {
 })->group('usage-tests');
 
 // GOAL-2.md: Usage with XML dataset
-dataset('customer_support_xml', fn () => EvalCase::fromXml(
+dataset('customer_support_xml', fn () => (new DatasetLoader)->fromXml(
     __DIR__.'/Fixtures/datasets/customer-support.case.xml'
 ));
 
@@ -131,7 +132,7 @@ it('loads cases from directory', function () {
 })->group('usage-tests');
 
 // GOAL-2.md: Use dataset with fromDirectory
-dataset('all_fixture_cases', fn () => EvalCase::fromDirectory(
+dataset('all_fixture_cases', fn () => (new DatasetLoader)->fromDirectory(
     __DIR__.'/Fixtures/datasets'
 ));
 

@@ -123,7 +123,10 @@ final class LlmJudge implements Judge
 
         Criterion: {$criterion}
 
-        Evaluate the output and determine if it passes or fails. Provide brief reasoning for your assessment.
+        Evaluate the output and determine if the criterion is met.
+        Set "passed" to true if the criterion IS met/satisfied by the output.
+        Set "passed" to false if the criterion is NOT met/satisfied by the output.
+        Provide brief reasoning for your assessment.
         PROMPT;
     }
 

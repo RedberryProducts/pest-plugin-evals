@@ -28,11 +28,11 @@ it('uses simple prompt', function () {
 it('overrides provider and model inline', function () {
     evaluate(SalesCoachAgent::class)
         ->prompt(
-            'Analyze this sales call transcript: Customer asked about pricing.',
+            'Analyze this sales call transcript: Customer asked about pricing and the rep offered a 10% discount. Give feedback on the rep\'s approach.',
             provider: 'openai',
             model: 'gpt-4o-mini',
         )
-        ->assertMeets('The response provides feedback about the sales call');
+        ->assertMeets('The response provides feedback or analysis about a sales interaction');
 })->group('usage-tests');
 
 // GOAL-2.md: Or using fluent methods

@@ -74,3 +74,10 @@ composer test && composer test:integration && composer test:usage
 | `composer test:types` | PHPStan static analysis |
 | `composer test:lint` | Pint code style check |
 | `composer test` | Full CI/CD suite (lint + types + unit) |
+
+
+## To Do
+
+- Split usage tests
+- Add simple extensio point for judges to replace instructions easily
+- Test in real project
