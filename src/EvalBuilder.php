@@ -90,7 +90,7 @@ final class EvalBuilder
             $this->timeout = $timeout;
         }
 
-        if (! empty($attachments)) {
+        if ($attachments !== []) {
             $this->attachments = $attachments;
         }
 
@@ -105,7 +105,7 @@ final class EvalBuilder
         $this->prompt = $case->prompt;
         $this->expected = $case->expected;
 
-        if (! empty($case->attachments)) {
+        if ($case->attachments !== []) {
             $this->attachments = $case->attachments;
         }
 
@@ -295,7 +295,7 @@ final class EvalBuilder
     /**
      * Ensure the agent has been executed. Lazy-runs on first call.
      */
-    protected function ensureRun(): void
+    private function ensureRun(): void
     {
         if ($this->hasRun) {
             return;
@@ -336,19 +336,19 @@ final class EvalBuilder
         $this->hasRun = true;
     }
 
-    protected function isSampled(): bool
+    private function isSampled(): bool
     {
         return $this->sampleCount !== null && $this->sampleCount > 1;
     }
 
-    protected function singleResult(): EvalResult
+    private function singleResult(): EvalResult
     {
         assert($this->result instanceof EvalResult);
 
         return $this->result;
     }
 
-    protected function sampleResults(): SampleResults
+    private function sampleResults(): SampleResults
     {
         assert($this->result instanceof SampleResults);
 
@@ -358,7 +358,7 @@ final class EvalBuilder
     /**
      * Build an EvalContext for a given result.
      */
-    protected function buildContext(
+    private function buildContext(
         EvalResult $result,
         mixed $expectedOverride = Missing::Value,
     ): EvalContext {
@@ -377,7 +377,7 @@ final class EvalBuilder
      *
      * @param  callable(EvalResult): bool  $check
      */
-    protected function assertEachResult(callable $check, string $description): void
+    private function assertEachResult(callable $check, string $description): void
     {
         $this->ensureRun();
 
@@ -418,7 +418,7 @@ final class EvalBuilder
     /**
      * Apply a Judge to each result (single or sampled).
      */
-    protected function judgeEachResult(
+    private function judgeEachResult(
         Judge $judge,
         string $description,
         mixed $expectedOverride = Missing::Value,

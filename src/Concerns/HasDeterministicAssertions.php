@@ -38,7 +38,7 @@ trait HasDeterministicAssertions
             fn (EvalResult $r): bool => collect($needles)->contains(
                 fn (string $n): bool => str_contains($r->text, $n),
             ),
-            'Expected output to contain at least one of: '.implode(', ', array_map(fn ($n) => "'{$n}'", $needles)),
+            'Expected output to contain at least one of: '.implode(', ', array_map(fn (string $n): string => "'{$n}'", $needles)),
         );
 
         return $this;
@@ -209,7 +209,7 @@ trait HasDeterministicAssertions
     {
         $this->assertEachResult(
             fn (EvalResult $r): bool => $r->structured !== null
-                ? ! empty($r->structured)
+                ? $r->structured !== []
                 : $r->text !== '',
             'Expected output to not be empty',
         );

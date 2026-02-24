@@ -19,6 +19,11 @@ class SupportBotAgent implements Agent, Conversational
             .'For return requests, include return instructions.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];

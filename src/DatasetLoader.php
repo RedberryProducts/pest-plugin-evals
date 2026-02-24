@@ -66,7 +66,7 @@ final class DatasetLoader implements LoadsDatasets
                 throw new InvalidArgumentException("Each <case> must have a 'name' attribute: {$path}");
             }
 
-            $prompt = isset($caseNode->prompt) ? (string) $caseNode->prompt : null;
+            $prompt = property_exists($caseNode, 'prompt') && $caseNode->prompt !== null ? (string) $caseNode->prompt : null;
 
             if ($prompt === null || $prompt === '') {
                 throw new InvalidArgumentException("Each <case> must contain a <prompt> element: {$path}");
@@ -74,11 +74,11 @@ final class DatasetLoader implements LoadsDatasets
 
             $case = EvalCase::make()->prompt($prompt);
 
-            if (isset($caseNode->expected)) {
+            if (property_exists($caseNode, 'expected') && $caseNode->expected !== null) {
                 $case->expected($this->parseExpectedXml($caseNode->expected));
             }
 
-            if (isset($caseNode->attachments)) {
+            if (property_exists($caseNode, 'attachments') && $caseNode->attachments !== null) {
                 $case->attachments($this->resolveAttachmentsFromXml($caseNode->attachments));
             }
 
@@ -160,11 +160,7 @@ final class DatasetLoader implements LoadsDatasets
         foreach ($element->children() as $child) {
             $name = $child->getName();
 
-            if ($child->children()->count() > 0) {
-                $result[$name] = $this->xmlToArray($child);
-            } else {
-                $result[$name] = (string) $child;
-            }
+            $result[$name] = $child->children()->count() > 0 ? $this->xmlToArray($child) : (string) $child;
         }
 
         return $result;
@@ -178,7 +174,7 @@ final class DatasetLoader implements LoadsDatasets
      */
     private function resolveAttachments(array $attachments): array
     {
-        return array_map(fn (array $attachment) => $this->resolveAttachment(
+        return array_map(fn (array $attachment): \Laravel\Ai\Files\Document|\Laravel\Ai\Files\Image => $this->resolveAttachment(
             type: $attachment['type'] ?? '',
             source: $attachment['source'] ?? '',
             path: $attachment['path'] ?? '',

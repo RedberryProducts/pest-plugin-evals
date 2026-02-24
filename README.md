@@ -79,5 +79,6 @@ composer test && composer test:integration && composer test:usage
 ## To Do
 
 - Split usage tests
-- Add simple extensio point for judges to replace instructions easily
+- Add simple extension point for judges to replace instructions easily
+- Write docs
 - Test in real project

@@ -17,6 +17,11 @@ class GeographyAgent implements Agent, Conversational
         return 'You are a geography expert. Be concise and factual. Always mention the country name in your answer.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];

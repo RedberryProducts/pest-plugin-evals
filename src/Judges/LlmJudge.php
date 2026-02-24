@@ -81,7 +81,7 @@ final class LlmJudge implements Judge
     {
         return agent(
             instructions: $this->buildInstructions($criterion, scored: false),
-            schema: fn ($s) => [
+            schema: fn ($s): array => [
                 /** @phpstan-ignore-next-line */
                 'passed' => $s->boolean()->required(),
                 /** @phpstan-ignore-next-line */
@@ -94,7 +94,7 @@ final class LlmJudge implements Judge
     {
         return agent(
             instructions: $this->buildInstructions($criterion, scored: true),
-            schema: fn ($s) => [
+            schema: fn ($s): array => [
                 /** @phpstan-ignore-next-line */
                 'score' => $s->integer()->min(0)->max(100)->required(),
                 /** @phpstan-ignore-next-line */

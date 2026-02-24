@@ -17,6 +17,11 @@ class ConciseAssistantAgent implements Agent, Conversational
         return 'You are a helpful assistant. Keep answers short and to the point. Respond with only the essential information.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];

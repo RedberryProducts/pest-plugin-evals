@@ -37,7 +37,7 @@ final class SimilarityJudge implements Judge
 
         $judge = agent(
             instructions: $this->buildInstructions(),
-            schema: fn ($s) => [
+            schema: fn ($s): array => [
                 /** @phpstan-ignore-next-line */
                 'score' => $s->integer()->min(0)->max(100)->required(),
                 /** @phpstan-ignore-next-line */

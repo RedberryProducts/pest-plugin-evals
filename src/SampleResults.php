@@ -15,15 +15,15 @@ use Traversable;
 final class SampleResults implements Countable, IteratorAggregate
 {
     /** @var Collection<int, JudgeResult>|null */
-    protected ?Collection $judgeResults = null;
+    private ?Collection $judgeResults = null;
 
     /**
      * @param  Collection<int, EvalResult>  $results  The raw results from each sample run.
      * @param  int|null  $minimum  Minimum samples that must pass. null = all.
      */
     public function __construct(
-        protected Collection $results,
-        protected ?int $minimum = null,
+        private Collection $results,
+        private ?int $minimum = null,
     ) {}
 
     public function count(): int
@@ -99,11 +99,11 @@ final class SampleResults implements Countable, IteratorAggregate
      */
     public function passRate(): float
     {
-        if ($this->judgeResults === null || $this->judgeResults->isEmpty()) {
+        if (! $this->judgeResults instanceof \Illuminate\Support\Collection || $this->judgeResults->isEmpty()) {
             return 0.0;
         }
 
-        $passCount = $this->judgeResults->filter(fn (JudgeResult $r) => $r->passed)->count();
+        $passCount = $this->judgeResults->filter(fn (JudgeResult $r): bool => $r->passed)->count();
 
         return ($passCount / $this->judgeResults->count()) * 100;
     }
@@ -114,17 +114,17 @@ final class SampleResults implements Countable, IteratorAggregate
      */
     public function averageScore(): ?float
     {
-        if ($this->judgeResults === null || $this->judgeResults->isEmpty()) {
+        if (! $this->judgeResults instanceof \Illuminate\Support\Collection || $this->judgeResults->isEmpty()) {
             return null;
         }
 
-        $scored = $this->judgeResults->filter(fn (JudgeResult $r) => $r->score !== null);
+        $scored = $this->judgeResults->filter(fn (JudgeResult $r): bool => $r->score !== null);
 
         if ($scored->isEmpty()) {
             return null;
         }
 
-        return $scored->avg(fn (JudgeResult $r) => (float) $r->score);
+        return $scored->avg(fn (JudgeResult $r): float => (float) $r->score);
     }
 
     /**
@@ -132,11 +132,11 @@ final class SampleResults implements Countable, IteratorAggregate
      */
     public function passed(): bool
     {
-        if ($this->judgeResults === null) {
+        if (! $this->judgeResults instanceof \Illuminate\Support\Collection) {
             return false;
         }
 
-        $passCount = $this->judgeResults->filter(fn (JudgeResult $r) => $r->passed)->count();
+        $passCount = $this->judgeResults->filter(fn (JudgeResult $r): bool => $r->passed)->count();
         $required = $this->minimum ?? $this->count();
 
         return $passCount >= $required;

@@ -3,98 +3,49 @@
 /**
  * Deterministic Assertions - GOAL-2.md Section: Deterministic Assertions
  *
- * Tests string, length, JSON, type, and equality assertions.
+ * Tests string, length, type, and equality assertions.
+ * Consolidated: 11 tests → 3 tests, 11 API calls → 3 calls.
  */
 
 use Tests\Integration\Fixtures\GeographyAgent;
 use Tests\UsageTests\Fixtures\CopyWriterAgent;
 
-// --- String Assertions ---
-
-// GOAL-2.md: assertContains with single string
-it('asserts output contains a string', function () {
-    evaluate(CopyWriterAgent::class)
-        ->prompt('Write a tweet about Laravel')
-        ->assertContains('Laravel');
-})->group('usage-tests');
-
-// GOAL-2.md: assertContains with array (all must match)
-it('asserts output contains all strings', function () {
+// --- Test 1: String Content Assertions ---
+// Covers: assertContains(string), assertContains(array), assertContainsAny,
+//         assertNotContains, assertMatches
+test('string content assertions', function () {
     evaluate(GeographyAgent::class)
         ->prompt('Tell me about Paris, the capital of France')
-        ->assertContains(['Paris', 'France']);
-})->group('usage-tests');
-
-// GOAL-2.md: assertContainsAny (at least one)
-it('asserts output contains any of the given strings', function () {
-    evaluate(CopyWriterAgent::class)
-        ->prompt('Write a tweet about a popular PHP framework')
-        ->assertContainsAny(['Laravel', 'Symfony', 'CodeIgniter']);
-})->group('usage-tests');
-
-// GOAL-2.md: assertNotContains
-it('asserts output does not contain a string', function () {
-    evaluate(GeographyAgent::class)
-        ->prompt('What is the capital of France?')
-        ->assertNotContains('Python');
-})->group('usage-tests');
-
-// GOAL-2.md: assertMatches (regex)
-it('asserts output matches regex', function () {
-    evaluate(GeographyAgent::class)
-        ->prompt('What is the capital of France? Include the country name.')
+        ->assertContains('Paris')
+        ->assertContains(['Paris', 'France'])
+        ->assertContainsAny(['Paris', 'London', 'Berlin'])
+        ->assertNotContains('Python')
         ->assertMatches('/France/i');
 })->group('usage-tests');
 
-// --- Length Assertions ---
-
-// GOAL-2.md: assertLengthLessThan
-it('asserts output length is less than max', function () {
-    evaluate(CopyWriterAgent::class)
-        ->prompt('Write a tweet about Laravel. Keep it very short.')
-        ->assertLengthLessThan(500);
-})->group('usage-tests');
-
-// GOAL-2.md: assertLengthGreaterThan
-it('asserts output length is greater than min', function () {
-    evaluate(GeographyAgent::class)
-        ->prompt('Tell me about Paris, France. Include some detail.')
-        ->assertLengthGreaterThan(10);
-})->group('usage-tests');
-
-// GOAL-2.md: assertLengthBetween
-it('asserts output length is between bounds', function () {
+// --- Test 2: Length and Type Assertions ---
+// Covers: assertLengthLessThan, assertLengthGreaterThan, assertLengthBetween,
+//         assertString, assertNotEmpty
+test('length and type assertions', function () {
     evaluate(CopyWriterAgent::class)
         ->prompt('Write a tweet about Laravel')
-        ->assertLengthBetween(10, 1000);
-})->group('usage-tests');
-
-// --- Type Assertions ---
-
-// GOAL-2.md: assertString — plain text output
-it('asserts output is a plain string', function () {
-    evaluate(GeographyAgent::class)
-        ->prompt('What is the capital of France?')
-        ->assertString();
-})->group('usage-tests');
-
-// GOAL-2.md: assertNotEmpty
-it('asserts output is not empty', function () {
-    evaluate(GeographyAgent::class)
-        ->prompt('What is the capital of France?')
+        ->assertLengthGreaterThan(10)
+        ->assertLengthLessThan(1000)
+        ->assertLengthBetween(10, 1000)
+        ->assertString()
         ->assertNotEmpty();
 })->group('usage-tests');
 
-// --- Combined Deterministic Assertions ---
-
-// GOAL-2.md: Full example combining all deterministic assertion types
-it('chains multiple deterministic assertions', function () {
-    evaluate(CopyWriterAgent::class)
-        ->prompt('Write a tweet about Laravel')
-        ->assertContains('Laravel')
+// --- Test 3: Chained Assertions on Longer Output ---
+// Covers: assertLengthGreaterThan(100), assertContains, assertMatches on longer content
+test('chained deterministic assertions on longer output', function () {
+    evaluate(GeographyAgent::class)
+        ->prompt('Tell me about Paris, France. Include some detail about its landmarks and history.')
+        ->assertContains('Paris')
+        ->assertContains('France')
+        ->assertLengthGreaterThan(50)
         ->assertNotContains('bad word')
-        ->assertLengthGreaterThan(10)
-        ->assertLengthLessThan(1000)
+        ->assertMatches('/Paris/i')
         ->assertString()
         ->assertNotEmpty();
 })->group('usage-tests');

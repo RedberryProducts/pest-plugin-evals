@@ -19,6 +19,11 @@ class CopyWriterAgent implements Agent, Conversational
             .'Use an enthusiastic and engaging tone. Always include relevant hashtags.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];

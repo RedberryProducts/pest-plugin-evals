@@ -18,6 +18,11 @@ class HaikuWriterAgent implements Agent, Conversational
             .'Be creative and poetic. Only respond with the haiku itself, no explanation.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];

@@ -19,6 +19,11 @@ class BlogWriterAgent implements Agent, Conversational
             .'Explain technical concepts in a way that beginners can understand.';
     }
 
+    public function model(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
     public function messages(): iterable
     {
         return [];
