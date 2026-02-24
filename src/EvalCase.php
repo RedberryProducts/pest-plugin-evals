@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Redberry\Evals;
 
+use Redberry\Evals\Contracts\LoadsDatasets;
+
 final class EvalCase
 {
     public string $prompt = '';
@@ -16,6 +18,34 @@ final class EvalCase
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Load a single case from a JSON file.
+     */
+    public static function fromJson(string $path): self
+    {
+        return app(LoadsDatasets::class)->fromJson($path);
+    }
+
+    /**
+     * Load multiple cases from an XML file.
+     *
+     * @return array<string, self>
+     */
+    public static function fromXml(string $path): array
+    {
+        return app(LoadsDatasets::class)->fromXml($path);
+    }
+
+    /**
+     * Auto-discover *.case.json and *.case.xml files in a directory.
+     *
+     * @return array<string, self>
+     */
+    public static function fromDirectory(string $dir): array
+    {
+        return app(LoadsDatasets::class)->fromDirectory($dir);
     }
 
     public function prompt(string $prompt): self

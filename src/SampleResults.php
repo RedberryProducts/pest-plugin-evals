@@ -14,6 +14,9 @@ use Traversable;
  */
 final class SampleResults implements Countable, IteratorAggregate
 {
+    /** @var Collection<int, JudgeResult>|null */
+    protected ?Collection $judgeResults = null;
+
     /**
      * @param  Collection<int, EvalResult>  $results  The raw results from each sample run.
      * @param  int|null  $minimum  Minimum samples that must pass. null = all.
@@ -43,6 +46,7 @@ final class SampleResults implements Countable, IteratorAggregate
 
     public function last(): EvalResult
     {
+        /** @var EvalResult */
         return $this->results->last();
     }
 
@@ -67,5 +71,74 @@ final class SampleResults implements Countable, IteratorAggregate
         $this->results->each($callback);
 
         return $this;
+    }
+
+    /**
+     * Return a new instance with judge results attached.
+     *
+     * @param  Collection<int, JudgeResult>  $judgeResults
+     */
+    public function withJudgeResults(Collection $judgeResults): static
+    {
+        $clone = clone $this;
+        $clone->judgeResults = $judgeResults;
+
+        return $clone;
+    }
+
+    /**
+     * @return Collection<int, JudgeResult>|null
+     */
+    public function judgeResults(): ?Collection
+    {
+        return $this->judgeResults;
+    }
+
+    /**
+     * Get the pass rate as a percentage (0-100).
+     */
+    public function passRate(): float
+    {
+        if ($this->judgeResults === null || $this->judgeResults->isEmpty()) {
+            return 0.0;
+        }
+
+        $passCount = $this->judgeResults->filter(fn (JudgeResult $r) => $r->passed)->count();
+
+        return ($passCount / $this->judgeResults->count()) * 100;
+    }
+
+    /**
+     * Get the average score across all judge results.
+     * Returns null if no results have scores (binary-only judges).
+     */
+    public function averageScore(): ?float
+    {
+        if ($this->judgeResults === null || $this->judgeResults->isEmpty()) {
+            return null;
+        }
+
+        $scored = $this->judgeResults->filter(fn (JudgeResult $r) => $r->score !== null);
+
+        if ($scored->isEmpty()) {
+            return null;
+        }
+
+        return $scored->avg(fn (JudgeResult $r) => (float) $r->score);
+    }
+
+    /**
+     * Whether enough samples passed based on the minimum threshold.
+     */
+    public function passed(): bool
+    {
+        if ($this->judgeResults === null) {
+            return false;
+        }
+
+        $passCount = $this->judgeResults->filter(fn (JudgeResult $r) => $r->passed)->count();
+        $required = $this->minimum ?? $this->count();
+
+        return $passCount >= $required;
     }
 }

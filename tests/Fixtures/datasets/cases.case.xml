@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evalset>
+    <case name="capital-france">
+        <prompt>What is the capital of France?</prompt>
+        <expected>Paris</expected>
+    </case>
+    <case name="capital-japan">
+        <prompt>What is the capital of Japan?</prompt>
+        <expected>Tokyo</expected>
+    </case>
+</evalset>

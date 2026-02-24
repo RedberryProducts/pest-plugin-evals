@@ -1,0 +1,7 @@
+{
+    "prompt": "Summarize the document",
+    "expected": "A summary of the content",
+    "attachments": [
+        {"type": "document", "source": "path", "path": "/tmp/test.pdf"}
+    ]
+}

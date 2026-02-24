@@ -6,6 +6,9 @@ namespace Redberry\Evals;
 
 final class ToolInvocation
 {
+    /**
+     * @param  array<string, mixed>  $arguments
+     */
     public function __construct(
         public readonly string $toolName,
         public readonly ?string $toolClass,

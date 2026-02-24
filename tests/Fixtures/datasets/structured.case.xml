@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evalset>
+    <case name="structured-test">
+        <prompt>Extract user info</prompt>
+        <expected>
+            <name>John</name>
+            <age>30</age>
+        </expected>
+    </case>
+</evalset>
