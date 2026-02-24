@@ -10,3 +10,5 @@ coverage.xml
 *.swp
 *.swo
 .phpunit.cache
+
+openai-api-key.php

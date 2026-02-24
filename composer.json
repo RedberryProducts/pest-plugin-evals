@@ -53,7 +53,8 @@
         "test:refacto": "rector --dry-run",
         "test:lint": "pint --test",
         "test:types": "phpstan analyse --ansi",
-        "test:unit": "pest --colors=always",
+        "test:unit": "pest --testsuite=default --colors=always",
+        "test:integration": "pest --testsuite=integration --colors=always",
         "test": [
             "@test:refacto",
             "@test:lint",
