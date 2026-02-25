@@ -78,7 +78,8 @@ composer test && composer test:integration && composer test:usage
 
 ## To Do
 
-- Split usage tests
+- Split usage tests+
+- verbose?
 - Add simple extension point for judges to replace instructions easily
 - Write docs
 - Test in real project

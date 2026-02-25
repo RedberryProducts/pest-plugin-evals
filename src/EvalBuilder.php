@@ -382,7 +382,18 @@ final class EvalBuilder
         $this->ensureRun();
 
         if (! $this->isSampled()) {
-            Assert::assertTrue($check($this->singleResult()), $description);
+            $result = $this->singleResult();
+            $passed = $check($result);
+
+            EvalRecorder::record(new EvalRecord(
+                assertionName: $description,
+                input: $this->prompt ?? '',
+                output: $result->text,
+                passed: $passed,
+                toolInvocations: $result->toolInvocations,
+            ));
+
+            Assert::assertTrue($passed, $description);
 
             return;
         }
@@ -394,11 +405,24 @@ final class EvalBuilder
         $failedIndices = [];
 
         foreach ($samples as $i => $evalResult) {
-            if ($check($evalResult)) {
+            $passed = $check($evalResult);
+
+            if ($passed) {
                 $passCount++;
             } else {
                 $failedIndices[] = $i;
             }
+
+            EvalRecorder::record(new EvalRecord(
+                assertionName: $description,
+                input: $this->prompt ?? '',
+                output: $evalResult->text,
+                passed: $passed,
+                toolInvocations: $evalResult->toolInvocations,
+                sampleIndex: $i,
+                sampleTotal: $total,
+                sampleMinimum: $samples->minimum() ?? $total,
+            ));
         }
 
         $required = $samples->minimum() ?? $total;
@@ -427,9 +451,20 @@ final class EvalBuilder
         $this->ensureRun();
 
         if (! $this->isSampled()) {
-            $context = $this->buildContext($this->singleResult(), $expectedOverride);
+            $singleResult = $this->singleResult();
+            $context = $this->buildContext($singleResult, $expectedOverride);
             $judgeResult = $judge->evaluate($context);
             $passed = $negate ? ! $judgeResult->passed : $judgeResult->passed;
+
+            EvalRecorder::record(new EvalRecord(
+                assertionName: $description,
+                input: $this->prompt ?? '',
+                output: $singleResult->text,
+                passed: $passed,
+                toolInvocations: $singleResult->toolInvocations,
+                score: $judgeResult->score,
+                reasoning: $judgeResult->reasoning,
+            ));
 
             Assert::assertTrue(
                 $passed,
@@ -449,6 +484,19 @@ final class EvalBuilder
             $context = $this->buildContext($evalResult, $expectedOverride);
             $judgeResult = $judge->evaluate($context);
             $passed = $negate ? ! $judgeResult->passed : $judgeResult->passed;
+
+            EvalRecorder::record(new EvalRecord(
+                assertionName: $description,
+                input: $this->prompt ?? '',
+                output: $evalResult->text,
+                passed: $passed,
+                toolInvocations: $evalResult->toolInvocations,
+                score: $judgeResult->score,
+                reasoning: $judgeResult->reasoning,
+                sampleIndex: $i,
+                sampleTotal: $total,
+                sampleMinimum: $samples->minimum() ?? $total,
+            ));
 
             if ($passed) {
                 $passCount++;
