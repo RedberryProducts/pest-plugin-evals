@@ -21,6 +21,7 @@ trait HasJudgeAssertions
             threshold: $threshold,
             provider: $this->judgeProvider,
             model: $this->judgeModel,
+            instructions: $this->judgeInstructions,
         );
 
         $label = $criterion instanceof Rubric
@@ -45,6 +46,7 @@ trait HasJudgeAssertions
             criterion: $criterion,
             provider: $this->judgeProvider,
             model: $this->judgeModel,
+            instructions: $this->judgeInstructions,
         );
 
         $label = $criterion instanceof Rubric
@@ -69,6 +71,7 @@ trait HasJudgeAssertions
             threshold: $threshold,
             provider: $this->judgeProvider,
             model: $this->judgeModel,
+            instructions: $this->judgeInstructions,
         );
 
         $this->judgeEachResult(
@@ -91,6 +94,7 @@ trait HasJudgeAssertions
             threshold: $resolvedThreshold,
             provider: $this->judgeProvider,
             model: $this->judgeModel,
+            instructions: $this->judgeInstructions,
         );
 
         $this->judgeEachResult(

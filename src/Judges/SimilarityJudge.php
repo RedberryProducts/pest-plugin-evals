@@ -18,6 +18,7 @@ final class SimilarityJudge implements Judge
         private readonly int $threshold = 80,
         private readonly Lab|string|null $provider = null,
         private readonly ?string $model = null,
+        private readonly ?string $instructions = null,
     ) {}
 
     public function evaluate(EvalContext $context): JudgeResult
@@ -67,7 +68,7 @@ final class SimilarityJudge implements Judge
 
     private function buildInstructions(): string
     {
-        return <<<'PROMPT'
+        $base = <<<'PROMPT'
         You are a similarity judge. Compare the actual output against the expected output and rate their semantic similarity.
 
         0 = completely different meaning and content
@@ -75,5 +76,11 @@ final class SimilarityJudge implements Judge
 
         Focus on meaning, not exact wording. Provide a score and brief reasoning for your assessment.
         PROMPT;
+
+        if ($this->instructions !== null) {
+            $base .= "\n\n".$this->instructions;
+        }
+
+        return $base;
     }
 }

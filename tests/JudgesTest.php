@@ -77,6 +77,15 @@ describe('LlmJudge', function () {
 
         expect($judge)->toBeInstanceOf(Redberry\Evals\Contracts\Judge::class);
     });
+
+    it('can be constructed with custom instructions', function () {
+        $judge = new LlmJudge(
+            criterion: 'test',
+            instructions: 'Evaluate in a medical context',
+        );
+
+        expect($judge)->toBeInstanceOf(LlmJudge::class);
+    });
 });
 
 describe('SimilarityJudge', function () {
@@ -113,6 +122,14 @@ describe('SimilarityJudge', function () {
         $judge = new SimilarityJudge;
 
         expect($judge)->toBeInstanceOf(Redberry\Evals\Contracts\Judge::class);
+    });
+
+    it('can be constructed with custom instructions', function () {
+        $judge = new SimilarityJudge(
+            instructions: 'Focus on medical terminology equivalence',
+        );
+
+        expect($judge)->toBeInstanceOf(SimilarityJudge::class);
     });
 });
 

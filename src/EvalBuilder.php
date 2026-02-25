@@ -43,6 +43,9 @@ final class EvalBuilder
     /** @var string|null Judge model override (protected so traits can read it). */
     protected ?string $judgeModel = null;
 
+    /** @var string|null Custom judge instructions appended to defaults (protected so traits can read it). */
+    protected ?string $judgeInstructions = null;
+
     private ?int $sampleCount = null;
 
     private ?int $sampleMinimum = null;
@@ -194,6 +197,16 @@ final class EvalBuilder
         return $this;
     }
 
+    /**
+     * Set custom instructions appended to the default judge instructions.
+     */
+    public function judgeInstructions(string $instructions): static
+    {
+        $this->judgeInstructions = $instructions;
+
+        return $this;
+    }
+
     // -------------------------------------------------------------------------
     // Execution
     // -------------------------------------------------------------------------
@@ -220,6 +233,7 @@ final class EvalBuilder
             criterion: $rubric ?? $criterion,
             provider: $this->judgeProvider,
             model: $this->judgeModel,
+            instructions: $this->judgeInstructions,
         );
 
         if (! $this->isSampled()) {

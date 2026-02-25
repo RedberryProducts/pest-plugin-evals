@@ -19,6 +19,7 @@ final class LlmJudge implements Judge
         private readonly ?int $threshold = null,
         private readonly Lab|string|null $provider = null,
         private readonly ?string $model = null,
+        private readonly ?string $instructions = null,
     ) {}
 
     public function evaluate(EvalContext $context): JudgeResult
@@ -106,7 +107,7 @@ final class LlmJudge implements Judge
     private function buildInstructions(string $criterion, bool $scored): string
     {
         if ($scored) {
-            return <<<PROMPT
+            $base = <<<PROMPT
             You are an evaluation judge. Score how well the given output meets the specified criterion on a scale of 0 to 100.
 
             Criterion: {$criterion}
@@ -116,18 +117,24 @@ final class LlmJudge implements Judge
 
             Provide a score and brief reasoning for your assessment.
             PROMPT;
+        } else {
+            $base = <<<PROMPT
+            You are an evaluation judge. Assess whether the given output meets the specified criterion.
+
+            Criterion: {$criterion}
+
+            Evaluate the output and determine if the criterion is met.
+            Set "passed" to true if the criterion IS met/satisfied by the output.
+            Set "passed" to false if the criterion is NOT met/satisfied by the output.
+            Provide brief reasoning for your assessment.
+            PROMPT;
         }
 
-        return <<<PROMPT
-        You are an evaluation judge. Assess whether the given output meets the specified criterion.
+        if ($this->instructions !== null) {
+            $base .= "\n\n".$this->instructions;
+        }
 
-        Criterion: {$criterion}
-
-        Evaluate the output and determine if the criterion is met.
-        Set "passed" to true if the criterion IS met/satisfied by the output.
-        Set "passed" to false if the criterion is NOT met/satisfied by the output.
-        Provide brief reasoning for your assessment.
-        PROMPT;
+        return $base;
     }
 
     private function buildPrompt(EvalContext $context): string

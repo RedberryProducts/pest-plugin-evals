@@ -213,6 +213,32 @@ describe('configuration', function () {
 
         expect($r1)->toBe($r2);
     });
+
+    it('sets judge instructions fluently', function () {
+        $result = builder(plainResponse('ok'))
+            ->prompt('test')
+            ->judgeInstructions('Custom evaluation context')
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
+
+    it('sets attachments via dedicated method', function () {
+        $result = builder(plainResponse('ok'))
+            ->prompt('test')
+            ->attachments(['file1.pdf'])
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
+
+    it('sets attachments via prompt parameter', function () {
+        $result = builder(plainResponse('ok'))
+            ->prompt('test', attachments: ['file1.pdf'])
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -387,6 +413,41 @@ describe('JSON assertions', function () {
         expect(fn () => builder(plainResponse('{"name": "John"}'))
             ->prompt('test')
             ->assertJsonStructure(['name', 'age']))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertJsonPath fails with non-array output', function () {
+        expect(fn () => builder(plainResponse('just a string'))
+            ->prompt('test')
+            ->assertJsonPath('key', 'value'))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertJsonStructure fails with non-array output', function () {
+        expect(fn () => builder(plainResponse('not json at all'))
+            ->prompt('test')
+            ->assertJsonStructure(['key']))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertJsonStructure fails when nested key is missing', function () {
+        expect(fn () => builder(plainResponse('{"user": {"name": "John"}}'))
+            ->prompt('test')
+            ->assertJsonStructure(['user' => ['name', 'email']]))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertJsonStructure fails when nested value is not array', function () {
+        expect(fn () => builder(plainResponse('{"user": "not-an-object"}'))
+            ->prompt('test')
+            ->assertJsonStructure(['user' => ['name']]))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertJsonStructure fails with deeply nested structure mismatch', function () {
+        expect(fn () => builder(plainResponse('{"user": {"address": {"city": "Paris"}}}'))
+            ->prompt('test')
+            ->assertJsonStructure(['user' => ['address' => ['city', 'zip']]]))
             ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
     });
 });
@@ -592,6 +653,19 @@ describe('tool assertions', function () {
             ->prompt('test')
             ->assertToolUseSequence(['search', 'fetch']))
             ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertToolUseSequence breaks early when all matched with trailing invocations', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search'],
+            ['id' => 'c2', 'name' => 'fetch'],
+            ['id' => 'c3', 'name' => 'log'],
+            ['id' => 'c4', 'name' => 'cleanup'],
+        ]);
+
+        builder($response)
+            ->prompt('test')
+            ->assertToolUseSequence(['search', 'fetch']);
     });
 
     it('assertToolUsedTimes passes with exact count', function () {
