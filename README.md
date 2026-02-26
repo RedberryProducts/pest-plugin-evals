@@ -54,6 +54,7 @@ It works with [Laravel AI SDK](https://laravel.com/docs/12.x/ai-sdk) agents. If 
   - [Custom Judge Instructions](#custom-judge-instructions)
 - [Configuration](#configuration)
 - [CLI Output](#cli-output)
+- [Running in CI/CD](#running-in-cicd)
 - [Full Examples](#full-examples)
 - [API Reference](#api-reference)
 
@@ -1134,6 +1135,65 @@ When using `->samples()`, verbose mode shows per-sample results:
 
   ─────────────────────────────────────────────────────────────────────
 ```
+
+---
+
+## Running in CI/CD
+
+Evals make real API calls, which means they are slow, cost money, and require API keys. You'll usually want to skip them in CI pipelines and run them manually or on a schedule instead.
+
+### Option 1: Pest Groups (Recommended)
+
+Assign your evals to a Pest group, then exclude that group in CI.
+
+Tag your eval tests with the `evals` group:
+
+```php
+test('PostWriter writes engaging content', function () {
+    evaluate(PostWriter::class)
+        ->whenPrompted('Write a blog post about Laravel')
+        ->toMeet('The content is engaging and informative');
+})->group('evals');
+```
+
+You can tag an entire file at once by adding this at the top:
+
+```php
+uses()->group('evals');
+```
+
+Then exclude the group in your CI pipeline:
+
+```bash
+pest --exclude-group=evals
+```
+
+Or add a dedicated composer script in `composer.json`:
+
+```json
+{
+    "scripts": {
+        "test": "pest --exclude-group=evals",
+        "test:evals": "pest --group=evals"
+    }
+}
+```
+
+Now `composer test` skips evals, and `composer test:evals` runs only evals.
+
+### Option 2: `skipOnCi()`
+
+If you prefer not to manage groups, use Pest's built-in `skipOnCi()` method on individual tests:
+
+```php
+test('PostWriter writes engaging content', function () {
+    evaluate(PostWriter::class)
+        ->whenPrompted('Write a blog post about Laravel')
+        ->toMeet('The content is engaging and informative');
+})->skipOnCi();
+```
+
+This skips the test whenever the `CI` environment variable is set (which GitHub Actions, GitLab CI, and most CI providers set automatically).
 
 ---
 
