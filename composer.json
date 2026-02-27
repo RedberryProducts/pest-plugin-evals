@@ -16,7 +16,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "laravel/ai": "^0.2.2",
+        "laravel/ai": "^0.2.5",
         "pestphp/pest": "^4.3.1",
         "pestphp/pest-plugin": "^4.0.0",
         "pestphp/pest-plugin-laravel": "^4.0"
