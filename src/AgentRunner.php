@@ -42,7 +42,7 @@ final class AgentRunner
         // The Promptable trait accepts timeout but the Agent interface doesn't declare it.
         // Only pass timeout when explicitly set to avoid issues with agents that don't support it.
         $response = $timeout !== null
-            ? $resolvedAgent->prompt(prompt: $prompt, attachments: $attachments, provider: $providerStr, model: $model, timeout: $timeout) // @phpstan-ignore argument.unknown
+            ? $resolvedAgent->prompt(prompt: $prompt, attachments: $attachments, provider: $providerStr, model: $model, timeout: $timeout)
             : $resolvedAgent->prompt(prompt: $prompt, attachments: $attachments, provider: $providerStr, model: $model);
 
         return $this->normalize($response, $resolvedAgent);
