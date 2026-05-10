@@ -66,7 +66,15 @@ It works with [Laravel AI SDK](https://laravel.com/docs/12.x/ai-sdk) agents. If 
 composer require redberry/pest-plugin-evals --dev
 ```
 
-That's it. The plugin auto-registers with Pest and Laravel via the service provider.
+The plugin auto-registers with Pest and Laravel via the service provider.
+
+If you want to customize the default judge, output, or sampling settings, publish the config file:
+
+```bash
+php artisan vendor:publish --tag=evals-config
+```
+
+This will create `config/evals.php` in your application.
 
 ---
 
