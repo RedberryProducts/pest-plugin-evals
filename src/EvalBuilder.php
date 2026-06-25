@@ -70,14 +70,14 @@ final class EvalBuilder
     /**
      * Set the prompt and optionally override provider/model/timeout/attachments.
      *
-     * @param  array<int, mixed>  $attachments
+     * @param  array<int, mixed>|null  $attachments
      */
     public function prompt(
         string $prompt,
         Lab|string|null $provider = null,
         ?string $model = null,
         ?int $timeout = null,
-        array $attachments = [],
+        ?array $attachments = null,
     ): static {
         $this->prompt = $prompt;
 
@@ -93,7 +93,7 @@ final class EvalBuilder
             $this->timeout = $timeout;
         }
 
-        if ($attachments !== []) {
+        if ($attachments !== null) {
             $this->attachments = $attachments;
         }
 
@@ -108,9 +108,7 @@ final class EvalBuilder
         $this->prompt = $case->prompt;
         $this->expected = $case->expected;
 
-        if ($case->attachments !== []) {
-            $this->attachments = $case->attachments;
-        }
+        $this->attachments = $case->attachments;
 
         return $this;
     }
