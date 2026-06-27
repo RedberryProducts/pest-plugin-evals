@@ -133,10 +133,50 @@ trait HasToolAssertions
         }
 
         if (is_array($constraint)) {
-            return $invocation->arguments === $constraint;
+            return $this->argumentsMatchSubset($invocation->arguments, $constraint);
         }
 
         return (bool) $constraint($invocation);
+    }
+
+    /**
+     * Check whether actual arguments contain the expected subset.
+     *
+     * Associative arrays match by key/value subset, while list arrays remain exact
+     * so ordered argument lists do not silently gain different semantics.
+     *
+     * @param  array<mixed>  $actual
+     * @param  array<mixed>  $expected
+     */
+    private function argumentsMatchSubset(array $actual, array $expected): bool
+    {
+        if (array_is_list($expected)) {
+            return $actual === $expected;
+        }
+
+        foreach ($expected as $key => $value) {
+            if (! array_key_exists($key, $actual)) {
+                return false;
+            }
+
+            if (is_array($value)) {
+                if (! is_array($actual[$key])) {
+                    return false;
+                }
+
+                if (! $this->argumentsMatchSubset($actual[$key], $value)) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if ($actual[$key] !== $value) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

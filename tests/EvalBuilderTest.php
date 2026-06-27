@@ -586,6 +586,58 @@ describe('tool assertions', function () {
             ->assertToolUsed('search', ['query' => 'PHP']);
     });
 
+    it('assertToolUsed with array constraint passes when invocation has extra arguments', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['query' => 'PHP', 'limit' => 10]],
+        ]);
+
+        builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['query' => 'PHP']);
+    });
+
+    it('assertToolUsed with array constraint passes when associative keys are in a different order', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['limit' => 10, 'query' => 'PHP']],
+        ]);
+
+        builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['query' => 'PHP', 'limit' => 10]);
+    });
+
+    it('assertToolUsed with array constraint fails when an expected key is missing', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['query' => 'PHP']],
+        ]);
+
+        expect(fn () => builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['query' => 'PHP', 'limit' => 10]))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertToolUsed with array constraint fails when an expected value differs', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['query' => 'PHP', 'limit' => 10]],
+        ]);
+
+        expect(fn () => builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['query' => 'Laravel']))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
+    it('assertToolUsed with array constraint supports nested associative subsets', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['filters' => ['topic' => 'PHP', 'safe' => true], 'limit' => 10]],
+        ]);
+
+        builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['filters' => ['topic' => 'PHP']]);
+    });
+
     it('assertToolUsed with closure constraint', function () {
         $response = responseWithTools('Done', [
             ['id' => 'c1', 'name' => 'search', 'arguments' => ['query' => 'PHP']],
