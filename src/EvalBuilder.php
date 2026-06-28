@@ -170,10 +170,23 @@ final class EvalBuilder
     /**
      * Run the agent multiple times and evaluate each sample.
      */
-    public function samples(int $count, ?int $minimum = null): static
+    public function samples(?int $count = null, ?int $minimum = null): static
     {
-        $this->sampleCount = $count;
-        $this->sampleMinimum = $minimum;
+        if ($count !== null) {
+            $this->sampleCount = $count;
+        } else {
+            $configuredCount = config('evals.sampling.default_samples', 1);
+            $this->sampleCount = is_numeric($configuredCount) ? (int) $configuredCount : 1;
+        }
+
+        if ($minimum !== null) {
+            $this->sampleMinimum = $minimum;
+
+            return $this;
+        }
+
+        $configuredMinimum = config('evals.sampling.default_minimum');
+        $this->sampleMinimum = is_numeric($configuredMinimum) ? (int) $configuredMinimum : null;
 
         return $this;
     }
@@ -181,7 +194,7 @@ final class EvalBuilder
     /**
      * Alias for samples().
      */
-    public function repeat(int $count, ?int $minimum = null): static
+    public function repeat(?int $count = null, ?int $minimum = null): static
     {
         return $this->samples($count, $minimum);
     }
@@ -352,7 +365,7 @@ final class EvalBuilder
 
     private function isSampled(): bool
     {
-        return $this->sampleCount !== null && $this->sampleCount > 1;
+        return $this->sampleCount !== null;
     }
 
     private function singleResult(): EvalResult

@@ -628,6 +628,8 @@ evaluate(SalesCoach::class)
 
 This runs the agent **5 times**. If even one sample fails, the test fails.
 
+If you call `->samples()` without arguments, it uses `sampling.default_samples` and `sampling.default_minimum` from `config/evals.php`. Calling `->samples(1)` still opts into sampling mode, so `->run()` and `->judge()` return `SampleResults` consistently.
+
 ### Allowing Some Variance
 
 LLMs aren't perfect. If you're OK with occasional misses, set a `minimum`:
