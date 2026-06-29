@@ -135,7 +135,7 @@ describe('configuration', function () {
         $agent = Mockery::mock(Agent::class);
         $agent->shouldReceive('prompt')
             ->once()
-            ->withArgs(function (string $prompt, array $attachments, ?string $provider, ?string $model) {
+            ->withArgs(function (string $prompt, array $attachments, ?string $provider, ?string $model, mixed ...$rest) {
                 return $provider === 'openai' && $model === 'gpt-4o';
             })
             ->andReturn(plainResponse());
@@ -151,7 +151,7 @@ describe('configuration', function () {
         $agent = Mockery::mock(Agent::class);
         $agent->shouldReceive('prompt')
             ->once()
-            ->withArgs(function (string $prompt, array $attachments, ?string $provider) {
+            ->withArgs(function (string $prompt, array $attachments, ?string $provider, mixed ...$rest) {
                 return $provider === Lab::OpenAI->value;
             })
             ->andReturn(plainResponse());
