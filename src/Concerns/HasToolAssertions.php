@@ -13,7 +13,7 @@ trait HasToolAssertions
     /**
      * Assert a tool was used (optionally with matching arguments or closure constraint).
      *
-     * @param  array<string, mixed>|Closure(ToolInvocation): bool|null  $constraint
+     * @param  array<array-key, mixed>|Closure(ToolInvocation): bool|null  $constraint
      */
     public function assertToolUsed(string $tool, array|Closure|null $constraint = null): static
     {
@@ -117,7 +117,7 @@ trait HasToolAssertions
     /**
      * Check if a ToolInvocation matches a tool AND a constraint.
      *
-     * @param  array<string, mixed>|Closure(ToolInvocation): bool|null  $constraint
+     * @param  array<array-key, mixed>|Closure(ToolInvocation): bool|null  $constraint
      */
     private function toolMatchesConstraint(
         ToolInvocation $invocation,

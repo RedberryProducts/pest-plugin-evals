@@ -638,6 +638,27 @@ describe('tool assertions', function () {
             ->assertToolUsed('search', ['filters' => ['topic' => 'PHP']]);
     });
 
+    it('assertToolUsed with list array constraint passes on exact order', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['PHP', 'Pest']],
+        ]);
+
+        builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['PHP', 'Pest']);
+    });
+
+    it('assertToolUsed with list array constraint fails when actual list has extra items', function () {
+        $response = responseWithTools('Done', [
+            ['id' => 'c1', 'name' => 'search', 'arguments' => ['PHP', 'Pest']],
+        ]);
+
+        expect(fn () => builder($response)
+            ->prompt('test')
+            ->assertToolUsed('search', ['PHP']))
+            ->toThrow(PHPUnit\Framework\AssertionFailedError::class);
+    });
+
     it('assertToolUsed with closure constraint', function () {
         $response = responseWithTools('Done', [
             ['id' => 'c1', 'name' => 'search', 'arguments' => ['query' => 'PHP']],
