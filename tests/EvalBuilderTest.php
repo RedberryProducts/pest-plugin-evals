@@ -208,6 +208,29 @@ describe('configuration', function () {
             ->and($result->minimum())->toBe(1);
     });
 
+    it('does not apply configured minimum when an explicit sample count is provided', function () {
+        config()->set('evals.sampling.default_minimum', 1);
+
+        $result = (new EvalBuilder(fakeAgentTimes(2, plainResponse('a'), plainResponse('b'))))
+            ->samples(2)
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(2)
+            ->and($result->minimum())->toBeNull();
+    });
+
+    it('clamps zero sample count to at least one run', function () {
+        $result = (new EvalBuilder(fakeAgentTimes(1, plainResponse('a'))))
+            ->samples(0)
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(1);
+    });
+
     it('repeat is alias for samples', function () {
         $agent = fakeAgentTimes(2, plainResponse('a'), plainResponse('b'));
         $b = (new EvalBuilder($agent))->repeat(2);

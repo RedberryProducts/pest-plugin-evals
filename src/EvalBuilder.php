@@ -173,7 +173,7 @@ final class EvalBuilder
     public function samples(?int $count = null, ?int $minimum = null): static
     {
         if ($count !== null) {
-            $this->sampleCount = $count;
+            $this->sampleCount = max(1, $count);
         } else {
             $configuredCount = config('evals.sampling.default_samples', 1);
             $this->sampleCount = is_numeric($configuredCount) ? (int) $configuredCount : 1;
@@ -181,6 +181,12 @@ final class EvalBuilder
 
         if ($minimum !== null) {
             $this->sampleMinimum = $minimum;
+
+            return $this;
+        }
+
+        if ($count !== null) {
+            $this->sampleMinimum = null;
 
             return $this;
         }
