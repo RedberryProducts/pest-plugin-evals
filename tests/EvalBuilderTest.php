@@ -231,6 +231,18 @@ describe('configuration', function () {
             ->and($result->count())->toBe(1);
     });
 
+    it('clamps configured sample count to at least one run', function () {
+        config()->set('evals.sampling.default_samples', 0);
+
+        $result = (new EvalBuilder(fakeAgentTimes(1, plainResponse('a'))))
+            ->samples()
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(1);
+    });
+
     it('repeat is alias for samples', function () {
         $agent = fakeAgentTimes(2, plainResponse('a'), plainResponse('b'));
         $b = (new EvalBuilder($agent))->repeat(2);

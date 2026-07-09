@@ -176,7 +176,7 @@ final class EvalBuilder
             $this->sampleCount = max(1, $count);
         } else {
             $configuredCount = config('evals.sampling.default_samples', 1);
-            $this->sampleCount = is_numeric($configuredCount) ? (int) $configuredCount : 1;
+            $this->sampleCount = is_numeric($configuredCount) ? max(1, (int) $configuredCount) : 1;
         }
 
         if ($minimum !== null) {
