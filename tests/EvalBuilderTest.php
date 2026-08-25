@@ -185,6 +185,64 @@ describe('configuration', function () {
             ->and($result->count())->toBe(3);
     });
 
+    it('samples with one run still returns SampleResults', function () {
+        $result = sampledBuilder(1, plainResponse('a'))
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(1);
+    });
+
+    it('uses configured sampling defaults when arguments are omitted', function () {
+        config()->set('evals.sampling.default_samples', 2);
+        config()->set('evals.sampling.default_minimum', 1);
+
+        $result = (new EvalBuilder(fakeAgentTimes(2, plainResponse('a'), plainResponse('b'))))
+            ->samples()
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(2)
+            ->and($result->minimum())->toBe(1);
+    });
+
+    it('does not apply configured minimum when an explicit sample count is provided', function () {
+        config()->set('evals.sampling.default_minimum', 1);
+
+        $result = (new EvalBuilder(fakeAgentTimes(2, plainResponse('a'), plainResponse('b'))))
+            ->samples(2)
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(2)
+            ->and($result->minimum())->toBeNull();
+    });
+
+    it('clamps zero sample count to at least one run', function () {
+        $result = (new EvalBuilder(fakeAgentTimes(1, plainResponse('a'))))
+            ->samples(0)
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(1);
+    });
+
+    it('clamps configured sample count to at least one run', function () {
+        config()->set('evals.sampling.default_samples', 0);
+
+        $result = (new EvalBuilder(fakeAgentTimes(1, plainResponse('a'))))
+            ->samples()
+            ->prompt('test')
+            ->run();
+
+        expect($result)->toBeInstanceOf(SampleResults::class)
+            ->and($result->count())->toBe(1);
+    });
+
     it('repeat is alias for samples', function () {
         $agent = fakeAgentTimes(2, plainResponse('a'), plainResponse('b'));
         $b = (new EvalBuilder($agent))->repeat(2);
