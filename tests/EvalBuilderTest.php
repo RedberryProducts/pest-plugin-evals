@@ -135,7 +135,7 @@ describe('configuration', function () {
         $agent = Mockery::mock(Agent::class);
         $agent->shouldReceive('prompt')
             ->once()
-            ->withArgs(function (string $prompt, array $attachments, ?string $provider, ?string $model) {
+            ->withArgs(function (string $prompt, array $attachments, ?string $provider, ?string $model, mixed ...$rest) {
                 return $provider === 'openai' && $model === 'gpt-4o';
             })
             ->andReturn(plainResponse());
@@ -151,7 +151,7 @@ describe('configuration', function () {
         $agent = Mockery::mock(Agent::class);
         $agent->shouldReceive('prompt')
             ->once()
-            ->withArgs(function (string $prompt, array $attachments, ?string $provider) {
+            ->withArgs(function (string $prompt, array $attachments, ?string $provider, mixed ...$rest) {
                 return $provider === Lab::OpenAI->value;
             })
             ->andReturn(plainResponse());
@@ -235,6 +235,61 @@ describe('configuration', function () {
     it('sets attachments via prompt parameter', function () {
         $result = builder(plainResponse('ok'))
             ->prompt('test', attachments: ['file1.pdf'])
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
+
+    it('preserves existing attachments when prompt attachments are omitted', function () {
+        $agent = Mockery::mock(Agent::class);
+        $agent->shouldReceive('prompt')
+            ->once()
+            ->withArgs(function (string $prompt, array $attachments) {
+                return $prompt === 'test' && $attachments === ['file1.pdf'];
+            })
+            ->andReturn(plainResponse('ok'));
+
+        $result = (new EvalBuilder($agent))
+            ->attachments(['file1.pdf'])
+            ->prompt('test')
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
+
+    it('clears existing attachments when prompt attachments are an empty array', function () {
+        $agent = Mockery::mock(Agent::class);
+        $agent->shouldReceive('prompt')
+            ->once()
+            ->withArgs(function (string $prompt, array $attachments) {
+                return $prompt === 'test' && $attachments === [];
+            })
+            ->andReturn(plainResponse('ok'));
+
+        $result = (new EvalBuilder($agent))
+            ->attachments(['file1.pdf'])
+            ->prompt('test', attachments: [])
+            ->run();
+
+        expect($result->text)->toBe('ok');
+    });
+
+    it('clears stale attachments when loading a case without attachments', function () {
+        $agent = Mockery::mock(Agent::class);
+        $agent->shouldReceive('prompt')
+            ->once()
+            ->withArgs(function (string $prompt, array $attachments) {
+                return $prompt === 'Question?' && $attachments === [];
+            })
+            ->andReturn(plainResponse('ok'));
+
+        $case = EvalCase::make()
+            ->prompt('Question?')
+            ->expected('Answer');
+
+        $result = (new EvalBuilder($agent))
+            ->attachments(['stale-file.pdf'])
+            ->withCase($case)
             ->run();
 
         expect($result->text)->toBe('ok');
