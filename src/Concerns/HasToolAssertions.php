@@ -13,7 +13,7 @@ trait HasToolAssertions
     /**
      * Assert a tool was used (optionally with matching arguments or closure constraint).
      *
-     * @param  array<string, mixed>|Closure(ToolInvocation): bool|null  $constraint
+     * @param  array<array-key, mixed>|Closure(ToolInvocation): bool|null  $constraint
      */
     public function assertToolUsed(string $tool, array|Closure|null $constraint = null): static
     {
@@ -117,7 +117,7 @@ trait HasToolAssertions
     /**
      * Check if a ToolInvocation matches a tool AND a constraint.
      *
-     * @param  array<string, mixed>|Closure(ToolInvocation): bool|null  $constraint
+     * @param  array<array-key, mixed>|Closure(ToolInvocation): bool|null  $constraint
      */
     private function toolMatchesConstraint(
         ToolInvocation $invocation,
@@ -133,10 +133,50 @@ trait HasToolAssertions
         }
 
         if (is_array($constraint)) {
-            return $invocation->arguments === $constraint;
+            return $this->argumentsMatchSubset($invocation->arguments, $constraint);
         }
 
         return (bool) $constraint($invocation);
+    }
+
+    /**
+     * Check whether actual arguments contain the expected subset.
+     *
+     * Associative arrays match by key/value subset, while list arrays remain exact
+     * so ordered argument lists do not silently gain different semantics.
+     *
+     * @param  array<mixed>  $actual
+     * @param  array<mixed>  $expected
+     */
+    private function argumentsMatchSubset(array $actual, array $expected): bool
+    {
+        if (array_is_list($expected)) {
+            return $actual === $expected;
+        }
+
+        foreach ($expected as $key => $value) {
+            if (! array_key_exists($key, $actual)) {
+                return false;
+            }
+
+            if (is_array($value)) {
+                if (! is_array($actual[$key])) {
+                    return false;
+                }
+
+                if (! $this->argumentsMatchSubset($actual[$key], $value)) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if ($actual[$key] !== $value) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
